@@ -1,4 +1,4 @@
-# Fancy query string parsing
+# Fancy query string parsing & application/x-www-form-urlencoded parsing
 #
 # Copyright 2011 Adam Venturella
 # 

@@ -61,9 +61,16 @@ class QueryStringParser(object):
         
         self.result[key] = value
     
+    def parse_new(self, key, value):
+        ref = self.result
+        i   = iter(key)
+
+    def tokenize_new:(self, value_itr):
+        
+
     def tokenize(self, value):
         ref    = self.result
-        
+        needs  = None
         # need to be able to look ahead when a KEY is discovered, linked list
         # makes that a possibility. list() or collections.deque() not so much
         first_token = QueryStringToken(QueryStringToken.BEGIN)
@@ -72,13 +79,19 @@ class QueryStringParser(object):
         
         for char in value:
             if char == "[":
-                if buf not in ref:
+                if len(buf) is 0: # array in an array
+                    
+                elif buf not in ref:
                     ref[buf] = []
                 ref = ref[buf]
                 buf = ""
             elif char == "]":
+                key = None
                 try:
-                    tokens.next = QueryStringToken(QueryStringToken.KEY, int(buf))
+                    key = int(buf)
+                    try:
+                        ref = ref[key]
+                    except IndexError:
                 except ValueError:
                     tokens.next = QueryStringToken(QueryStringToken.KEY)
                 

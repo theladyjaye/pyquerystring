@@ -113,34 +113,30 @@ class QueryStringParser(object):
 
     def tokens(self, key):
         buf = ""
-        i = iter(key)
+        for char in key:
 
-        while 1:
-            try:
-                char = i.next()
+            if char == "[":
+                value = buf
+                buf = ""
+                yield QueryStringToken(QueryStringToken.ARRAY, value)
 
-                if char == "[":
-                    value = buf
+            elif char == ".":
+                value = buf
+                buf = ""
+                yield QueryStringToken(QueryStringToken.OBJECT, value)
+
+            elif char == "]":
+                try:
+                    value = int(buf)
                     buf = ""
-                    yield QueryStringToken(QueryStringToken.ARRAY, value)
-
-                elif char == ".":
-                    value = buf
-                    buf = ""
-                    yield QueryStringToken(QueryStringToken.OBJECT, value)
-
-                elif char == "]":
-                    try:
-                        value = int(buf)
-                        buf = ""
-                        yield QueryStringToken(QueryStringToken.KEY, value)
-                    except ValueError:
-                        yield QueryStringToken(QueryStringToken.KEY)
-                else:
-                    buf = buf + char
-            except StopIteration:
-                if len(buf) > 0:
-                    yield QueryStringToken(QueryStringToken.KEY, buf)
-                else:
-                    raise
-                break
+                    yield QueryStringToken(QueryStringToken.KEY, value)
+                except ValueError:
+                    yield QueryStringToken(QueryStringToken.KEY)
+            else:
+                buf = buf + char
+            
+        if len(buf) > 0:
+            yield QueryStringToken(QueryStringToken.KEY, buf)
+        else:
+            raise StopIteration()
+        

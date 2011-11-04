@@ -83,11 +83,13 @@ class QueryStringParser(object):
                     # there is not a next token
                     # set the value
                     try:
-                        next_type, next_key =  tokens.next()
-                        if next_type == QueryStringToken.ARRAY:
+                        
+                        next =  tokens.next()
+
+                        if next[0] == QueryStringToken.ARRAY:
                             ref.append([])
                             ref = ref[key]
-                        elif next_type == QueryStringToken.OBJECT:
+                        elif next[0] == QueryStringToken.OBJECT:
 
                             try:
                                 ref[key] = {}
@@ -106,23 +108,23 @@ class QueryStringParser(object):
         buf = ""
         for char in key:
             if char == "[":
-                yield (QueryStringToken.ARRAY, buf)
+                yield QueryStringToken.ARRAY, buf
                 buf = ""
 
             elif char == ".":
-                yield (QueryStringToken.OBJECT, buf)
+                yield QueryStringToken.OBJECT, buf
                 buf = ""
 
             elif char == "]":
                 try:
-                    yield (QueryStringToken.KEY, int(buf))
+                    yield QueryStringToken.KEY, int(buf)
                     buf = ""
                 except ValueError:
-                    yield (QueryStringToken.KEY)
+                    yield QueryStringToken.KEY, None
             else:
                 buf = buf + char
             
         if len(buf) > 0:
-            yield (QueryStringToken.KEY, buf)
+            yield QueryStringToken.KEY, buf
         else:
             raise StopIteration()

@@ -105,24 +105,20 @@ class QueryStringParser(object):
     def tokens(self, key):
         buf = ""
         for char in key:
-
             if char == "[":
-                value = buf
+                yield (QueryStringToken.ARRAY, buf)
                 buf = ""
-                yield (QueryStringToken.ARRAY, value)
 
             elif char == ".":
-                value = buf
+                yield (QueryStringToken.OBJECT, buf)
                 buf = ""
-                yield (QueryStringToken.OBJECT, value)
 
             elif char == "]":
                 try:
-                    value = int(buf)
-                    buf = ""
-                    yield (QueryStringToken.KEY, value)
+                    yield (QueryStringToken.KEY, int(buf))
                 except ValueError:
                     yield (QueryStringToken.KEY)
+                buf = ""
             else:
                 buf = buf + char
             
@@ -130,4 +126,3 @@ class QueryStringParser(object):
             yield (QueryStringToken.KEY, buf)
         else:
             raise StopIteration()
-        

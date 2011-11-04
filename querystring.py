@@ -20,13 +20,6 @@ class QueryStringToken(object):
     ARRAY    = "ARRAY"
     OBJECT   = "OBJECT"
     KEY      = "KEY"
-    BEGIN    = "BEGIN"
-    
-
-    def __init__(self, key, value=None):
-        self.key = key
-        self.value = value
-        self.next = None
 
 class QueryStringParser(object):
     
@@ -66,8 +59,7 @@ class QueryStringParser(object):
         tokens = self.tokens(key)
 
         for token in tokens:
-            token_type = token.key
-            key        = token.value
+            token_type, key = token
             
             if token_type == QueryStringToken.ARRAY:
                 if key not in ref:
@@ -91,12 +83,11 @@ class QueryStringParser(object):
                     # there is not a next token
                     # set the value
                     try:
-                        next = tokens.next()
-                        
-                        if next.key == QueryStringToken.ARRAY:
+                        next_type, next_key =  tokens.next()
+                        if next_type == QueryStringToken.ARRAY:
                             ref.append([])
                             ref = ref[key]
-                        elif next.key == QueryStringToken.OBJECT:
+                        elif next_type == QueryStringToken.OBJECT:
 
                             try:
                                 ref[key] = {}
@@ -118,25 +109,25 @@ class QueryStringParser(object):
             if char == "[":
                 value = buf
                 buf = ""
-                yield QueryStringToken(QueryStringToken.ARRAY, value)
+                yield (QueryStringToken.ARRAY, value)
 
             elif char == ".":
                 value = buf
                 buf = ""
-                yield QueryStringToken(QueryStringToken.OBJECT, value)
+                yield (QueryStringToken.OBJECT, value)
 
             elif char == "]":
                 try:
                     value = int(buf)
                     buf = ""
-                    yield QueryStringToken(QueryStringToken.KEY, value)
+                    yield (QueryStringToken.KEY, value)
                 except ValueError:
-                    yield QueryStringToken(QueryStringToken.KEY)
+                    yield (QueryStringToken.KEY)
             else:
                 buf = buf + char
             
         if len(buf) > 0:
-            yield QueryStringToken(QueryStringToken.KEY, buf)
+            yield (QueryStringToken.KEY, buf)
         else:
             raise StopIteration()
         

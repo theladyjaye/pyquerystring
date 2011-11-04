@@ -116,9 +116,9 @@ class QueryStringParser(object):
             elif char == "]":
                 try:
                     yield (QueryStringToken.KEY, int(buf))
+                    buf = ""
                 except ValueError:
                     yield (QueryStringToken.KEY)
-                buf = ""
             else:
                 buf = buf + char
             

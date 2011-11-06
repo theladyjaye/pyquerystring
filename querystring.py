@@ -20,13 +20,6 @@ class QueryStringToken(object):
     ARRAY    = "ARRAY"
     OBJECT   = "OBJECT"
     KEY      = "KEY"
-    BEGIN    = "BEGIN"
-    
-
-    def __init__(self, key, value=None):
-        self.key = key
-        self.value = value
-        self.next = None
 
 class QueryStringParser(object):
     
@@ -47,65 +40,26 @@ class QueryStringParser(object):
         #faster than invoking a regex
         try:
             key.index("[")
-            self.parse(self.tokenize(key), value)
+            self.parse(key, value)
             return
         except ValueError:
             pass
         
         try:
             key.index(".")
-            self.parse(self.tokenize(key), value)
+            self.parse(key, value)
             return
         except ValueError:
             pass
         
         self.result[key] = value
-    
-    def tokenize(self, value):
-        # need to be able to look ahead when a KEY is discovered, linked list
-        # makes that a possibility. list() or collections.deque() not so much
-        first_token = QueryStringToken(QueryStringToken.BEGIN)
-        tokens = first_token
-        buf = ""
-        
-        for char in value:
-            if char == "[":
-                tokens.next = QueryStringToken(QueryStringToken.ARRAY, buf)
-                tokens = tokens.next
-                buf = ""
-            elif char == "]":
-                try:
-                    tokens.next = QueryStringToken(QueryStringToken.KEY, int(buf))
-                except ValueError:
-                    tokens.next = QueryStringToken(QueryStringToken.KEY)
-                
-                tokens = tokens.next
-                buf = ""
-
-            elif char == ".":
-                tokens.next = QueryStringToken(QueryStringToken.OBJECT, buf)
-                tokens = tokens.next
-                buf = ""
-            else:
-                buf = buf + char
-        
-        if len(buf) > 0:
-            tokens.next = QueryStringToken(QueryStringToken.KEY, buf)
-            tokens = tokens.next
-        
-        return first_token.next
-    
-    def parse(self, token, value):
-        origin = self.result 
-        ref    = origin
-
-        while token:
-            token_type = token.key
-            key        = token.value
             
-            #print(token.key, token.value)
-            #token = token.next
-            #continue
+    def parse(self, key, value):
+        ref = self.result
+        tokens = self.tokens(key)
+
+        for token in tokens:
+            token_type, key = token
             
             if token_type == QueryStringToken.ARRAY:
                 if key not in ref:
@@ -120,7 +74,7 @@ class QueryStringParser(object):
             elif token_type == QueryStringToken.KEY:
                 try:
                     ref = ref[key]
-                    token = token.next
+                    tokens.next()
                 # TypeError is for pet[]=lucy&pet[]=ollie
                 # if the array key is empty a type error will be raised
                 except (IndexError, KeyError, TypeError) as e:
@@ -128,24 +82,49 @@ class QueryStringParser(object):
                     # so we look ahead to see what we are setting
                     # there is not a next token
                     # set the value
-                    if token.next is None:
+                    try:
+                        
+                        next =  tokens.next()
+
+                        if next[0] == QueryStringToken.ARRAY:
+                            ref.append([])
+                            ref = ref[key]
+                        elif next[0] == QueryStringToken.OBJECT:
+
+                            try:
+                                ref[key] = {}
+                            except IndexError:
+                                ref.append({})
+                            
+                            ref = ref[key]
+                    except StopIteration:
                         try:
                             ref.append(value)
                         except AttributeError:
                             ref[key] = value
                         return
-                    else:
-                        if token.next.key == QueryStringToken.ARRAY:
-                            ref.append([])
-                            ref = ref[key]
-                        elif token.next.key == QueryStringToken.OBJECT:
-                            try:
-                                ref[key] = {}
-                            except IndexError:
-                                ref.append({})
 
-                            ref = ref[key]
-                        
-                        token = token.next.next
-                        continue
-            token = token.next
+    def tokens(self, key):
+        buf = ""
+        for char in key:
+            if char == "[":
+                yield QueryStringToken.ARRAY, buf
+                buf = ""
+
+            elif char == ".":
+                yield QueryStringToken.OBJECT, buf
+                buf = ""
+
+            elif char == "]":
+                try:
+                    yield QueryStringToken.KEY, int(buf)
+                    buf = ""
+                except ValueError:
+                    yield QueryStringToken.KEY, None
+            else:
+                buf = buf + char
+            
+        if len(buf) > 0:
+            yield QueryStringToken.KEY, buf
+        else:
+            raise StopIteration()

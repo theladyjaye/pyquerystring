@@ -1,32 +1,38 @@
 # Fancy query string parsing & application/x-www-form-urlencoded parsing
 #
 # Copyright 2011 Adam Venturella
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #    http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from urlparse import parse_qsl
+try:
+    from urlparse import parse_qsl
+except ImportError:
+    from urllib.parse import parse_qsl
+
+
 class QueryStringToken(object):
 
-    ARRAY    = "ARRAY"
-    OBJECT   = "OBJECT"
-    KEY      = "KEY"
+    ARRAY = "ARRAY"
+    OBJECT = "OBJECT"
+    KEY = "KEY"
+
 
 class QueryStringParser(object):
-    
+
     def __init__(self, qs):
         self.result = {}
         pairs = parse_qsl(qs)
-        
+
         # we don't know how a user might pass in array indexs
         # so sort the keys first to ensure it's in a proper order
         sorted_pairs = sorted(pairs, key=lambda pair: pair[0])
@@ -44,28 +50,28 @@ class QueryStringParser(object):
             return
         except ValueError:
             pass
-        
+
         try:
             key.index(".")
             self.parse(key, value)
             return
         except ValueError:
             pass
-        
+
         self.result[key] = value
-            
+
     def parse(self, key, value):
         ref = self.result
         tokens = self.tokens(key)
 
         for token in tokens:
             token_type, key = token
-            
+
             if token_type == QueryStringToken.ARRAY:
                 if key not in ref:
                     ref[key] = []
                 ref = ref[key]
-            
+
             elif token_type == QueryStringToken.OBJECT:
                 if key not in ref:
                     ref[key] = {}
@@ -74,28 +80,28 @@ class QueryStringParser(object):
             elif token_type == QueryStringToken.KEY:
                 try:
                     ref = ref[key]
-                    tokens.next()
+                    next(tokens)
                 # TypeError is for pet[]=lucy&pet[]=ollie
                 # if the array key is empty a type error will be raised
-                except (IndexError, KeyError, TypeError) as e:
+                except (IndexError, KeyError, TypeError):
                     # the index didn't exist
                     # so we look ahead to see what we are setting
                     # there is not a next token
                     # set the value
                     try:
-                        
-                        next =  tokens.next()
 
-                        if next[0] == QueryStringToken.ARRAY:
+                        next_token = next(tokens)
+
+                        if next_token[0] == QueryStringToken.ARRAY:
                             ref.append([])
                             ref = ref[key]
-                        elif next[0] == QueryStringToken.OBJECT:
+                        elif next_token[0] == QueryStringToken.OBJECT:
 
                             try:
                                 ref[key] = {}
                             except IndexError:
                                 ref.append({})
-                            
+
                             ref = ref[key]
                     except StopIteration:
                         try:
@@ -123,7 +129,7 @@ class QueryStringParser(object):
                     yield QueryStringToken.KEY, None
             else:
                 buf = buf + char
-            
+
         if len(buf) > 0:
             yield QueryStringToken.KEY, buf
         else:

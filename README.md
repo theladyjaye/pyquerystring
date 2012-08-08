@@ -9,7 +9,7 @@ Python's default:
 	from urlparse import parse_qs
 ```
 
-does not understand the concept of data structures. When given a quesry string of:
+does not understand the concept of data structures. When given a query string of:
 
 	&dog=lucy&dog=tucker&dog=radar&id=11
 
@@ -37,7 +37,7 @@ Lets try some code:
 
 ```python
 	from querystring import QueryStringParser
-	
+
 	def __main__():
 		qs = "&id=foo&dog[0].name=lucy&dog[1].name=radar"
 		parser = QueryStringParser(qs)
@@ -51,7 +51,7 @@ Lets try some code:
 In other words, you get this:
 
 ```json
-	{"id":"foo", 
+	{"id":"foo",
 	 "dog":[{"name":"lucy"}, {"name":"radar"}]
 	}
 ```
@@ -60,7 +60,7 @@ You can get pretty crazy with it as well.  It will handle multidimensional array
 	&id=foo&dog[0][0]=lucy&dog[0][1]=radar&dog[1][0]=tucker&dog[1][1]=dexter
 
 even 3 dimensional arrays:
-	
+
 	&id=foo&dog[0][0][0]=lucy&dog[0][0][1]=radar&dog[0][0][2]=tucker
 
 Or you can go totally nuts and just throw some mixed madness at it:
@@ -72,16 +72,16 @@ You can also do some primitive array pushing:
 	&id=foo&dog[]=radar&dog[]=lucy&dog[]=tucker
 
 Or push into an object:
-	
+
 	&id=foo&dog.name[]=radar&dog.name[]=tucker&dog.name[]=lucy
 
 And you would get:
-	
+
 ```json
 	{"id":"foo",
     "dog":{"name":["radar", "tucker", "lucy"]}
    }
 ```
-Anyway, I think you get the idea. Crack open tests.py if you would like to see some additional examples.
+Anyway, I think you get the idea. Crack open tests/test_parser.py if you would like to see some additional examples.
 
 P.S. You could apply this to multipart parsing as well, you would just need to extract the parts that are not files, and hand them to this query string parser.

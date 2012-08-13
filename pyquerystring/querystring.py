@@ -41,8 +41,8 @@ class QueryStringParser(object):
         # so sort the keys first to ensure it's in a proper order
         sorted_pairs = sorted(pairs, key=lambda pair: pair[0])
 
-        map(self.process, sorted_pairs)
-        #[self.process(x) for x in sorted_pairs]
+        #map(self.process, sorted_pairs)
+        [self.process(x) for x in sorted_pairs]
 
     def process(self, pair):
         key = pair[0]
@@ -50,9 +50,9 @@ class QueryStringParser(object):
 
         def parse(value):
             receiver = self.protocol_receiver()
-            receiver.next()
+            next(receiver)
             protocol = self.protocol(target=receiver)
-            protocol.next()
+            next(protocol)
             for char in key:
                 protocol.send(char)
             protocol.send(DLE)

@@ -1,3 +1,4 @@
+
 # Fancy query string parsing & application/x-www-form-urlencoded parsing
 #
 # Copyright 2011 Adam Venturella
@@ -21,13 +22,13 @@ except ImportError:
 
 from collections import namedtuple
 
+ARRAY = "ARRAY"
+OBJECT = "OBJECT"
+KEY = "KEY"
+VALUE = "VALUE"
+DLE   = "\x10"
+
 Token = namedtuple('Token', 'type value')
-
-class QueryStringToken(object):
-
-    ARRAY = "ARRAY"
-    OBJECT = "OBJECT"
-    KEY = "KEY"
 
 
 class QueryStringParser(object):
@@ -47,94 +48,128 @@ class QueryStringParser(object):
         key = pair[0]
         value = pair[1]
 
-        #faster than invoking a regex
+        def parse(value):
+            receiver = self.protocol_receiver()
+            receiver.next()
+            protocol = self.protocol(target=receiver)
+            protocol.next()
+            for char in key:
+                protocol.send(char)
+            protocol.send(DLE)
+
+            receiver.send(Token(VALUE, value))
+
+        # faster than invoking a regex
+        # do we even need to parse anything?
+        # if one test for a token passes, it all
+        # must be parsed, return immediately because
+        # we don't care if the other tests passes,
+        # it's already been parsed.
         try:
             key.index("[")
-            self.parse(key, value)
+            parse(value)
             return
         except ValueError:
             pass
 
         try:
             key.index(".")
-            self.parse(key, value)
+            parse(value)
             return
         except ValueError:
             pass
 
         self.result[key] = value
 
-    def parse(self, key, value):
+    def protocol_receiver(self):
         ref = self.result
-        tokens = self.tokens(key)
 
-        for token in tokens:
-            token_type, key = token
+        while 1:
+            token = (yield)
+            type, key = token
 
-            if token_type == QueryStringToken.ARRAY:
+            if type == ARRAY:
                 if key not in ref:
-                    ref[key] = []
+                    try:
+                        ref[key] = []
+                    except TypeError:
+                        continue
                 ref = ref[key]
 
-            elif token_type == QueryStringToken.OBJECT:
+            elif type == OBJECT:
                 if key not in ref:
                     ref[key] = {}
                 ref = ref[key]
 
-            elif token_type == QueryStringToken.KEY:
+            elif type == KEY:
                 try:
                     ref = ref[key]
-                    next(tokens)
+                    token = (yield)
                 # TypeError is for pet[]=lucy&pet[]=ollie
                 # if the array key is empty a type error will be raised
                 except (IndexError, KeyError, TypeError):
                     # the index didn't exist
                     # so we look ahead to see what we are setting
                     # there is not a next token
-                    # set the value
-                    try:
+                    # set the values
+                    next_token = (yield)
+                    n_type, n_key = next_token
 
-                        next_token = next(tokens)
+                    if n_type == ARRAY:
+                        ref.append([])
+                        ref = ref[key]
 
-                        if next_token[0] == QueryStringToken.ARRAY:
-                            ref.append([])
-                            ref = ref[key]
-                        elif next_token[0] == QueryStringToken.OBJECT:
-
-                            try:
-                                ref[key] = {}
-                            except IndexError:
-                                ref.append({})
-
-                            ref = ref[key]
-                    except StopIteration:
+                    elif n_type == OBJECT:
                         try:
-                            ref.append(value)
+                            ref[key] = {}
+                        except IndexError:
+                            ref.append({})
+
+                        ref = ref[key]
+
+                    # always arrays?
+                    elif n_type == VALUE:
+                        try:
+                            ref.append(n_key)
                         except AttributeError:
-                            ref[key] = value
-                        return
+                            ref[key] = n_key
 
-    def tokens(self, key):
-        buf = ""
-        for char in key:
-            if char == "[":
-                yield QueryStringToken.ARRAY, buf
-                buf = ""
+    def protocol(self, array='[',
+                       obj='.',
+                       key=']',
+                       dle='\x10',
+                       target=None):
+        while 1:
+            byte = (yield)
+            buf = ''
+            while 1:
+                if byte == array:
+                    token = Token(ARRAY, buf)
+                    target.send(token)
+                    buf = None
+                    break
 
-            elif char == ".":
-                yield QueryStringToken.OBJECT, buf
-                buf = ""
+                elif byte == obj:
+                    token = Token(OBJECT, buf)
+                    target.send(token)
+                    buf = None
+                    break
 
-            elif char == "]":
-                try:
-                    yield QueryStringToken.KEY, int(buf)
-                    buf = ""
-                except ValueError:
-                    yield QueryStringToken.KEY, None
-            else:
-                buf = buf + char
+                elif byte == key:
+                    try:
+                        token = Token(KEY, int(buf))
+                        target.send(token)
+                        buf = None
+                    except ValueError:
+                        token = Token(KEY, None)
+                        target.send(token)
+                    break
+                elif byte == dle:
+                    break
+                else:
+                    buf += byte
 
-        if len(buf) > 0:
-            yield QueryStringToken.KEY, buf
-        else:
-            raise StopIteration()
+                byte = (yield)
+
+            if buf:
+                target.send(Token(KEY, buf))

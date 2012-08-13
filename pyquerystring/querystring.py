@@ -20,15 +20,14 @@ try:
 except ImportError:
     from urllib.parse import parse_qsl
 
-from collections import namedtuple
 
 ARRAY = "ARRAY"
 OBJECT = "OBJECT"
 KEY = "KEY"
 VALUE = "VALUE"
-DLE   = "\x10"
+DLE = "\x10"
 
-Token = namedtuple('Token', 'type value')
+#Token = namedtuple('Token', 'type value')
 
 
 class QueryStringParser(object):
@@ -57,7 +56,7 @@ class QueryStringParser(object):
                 protocol.send(char)
             protocol.send(DLE)
 
-            receiver.send(Token(VALUE, value))
+            receiver.send((VALUE, value))
 
         # faster than invoking a regex
         # do we even need to parse anything?
@@ -112,8 +111,7 @@ class QueryStringParser(object):
                     # so we look ahead to see what we are setting
                     # there is not a next token
                     # set the values
-                    next_token = (yield)
-                    n_type, n_key = next_token
+                    n_type, n_key = (yield)
 
                     if n_type == ARRAY:
                         ref.append([])
@@ -144,32 +142,34 @@ class QueryStringParser(object):
             buf = ''
             while 1:
                 if byte == array:
-                    token = Token(ARRAY, buf)
+                    token = (ARRAY, buf)
                     target.send(token)
                     buf = None
                     break
 
                 elif byte == obj:
-                    token = Token(OBJECT, buf)
+                    token = (OBJECT, buf)
                     target.send(token)
                     buf = None
                     break
 
                 elif byte == key:
                     try:
-                        token = Token(KEY, int(buf))
+                        token = (KEY, int(buf))
                         target.send(token)
                         buf = None
                     except ValueError:
-                        token = Token(KEY, None)
+                        token = (KEY, None)
                         target.send(token)
                     break
+
                 elif byte == dle:
                     break
+
                 else:
                     buf += byte
 
                 byte = (yield)
 
             if buf:
-                target.send(Token(KEY, buf))
+                target.send((KEY, buf))

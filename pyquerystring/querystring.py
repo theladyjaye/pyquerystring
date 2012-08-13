@@ -19,6 +19,9 @@ try:
 except ImportError:
     from urllib.parse import parse_qsl
 
+from collections import namedtuple
+
+Token = namedtuple('Token', 'type value')
 
 class QueryStringToken(object):
 
@@ -37,7 +40,8 @@ class QueryStringParser(object):
         # so sort the keys first to ensure it's in a proper order
         sorted_pairs = sorted(pairs, key=lambda pair: pair[0])
 
-        [self.process(x) for x in sorted_pairs]
+        map(self.process, sorted_pairs)
+        #[self.process(x) for x in sorted_pairs]
 
     def process(self, pair):
         key = pair[0]

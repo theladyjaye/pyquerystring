@@ -37,7 +37,14 @@ class QueryStringSuite(unittest.TestCase):
         self.assertEqual(parser.result["dog"][0], "tucker")
         self.assertEqual(parser.result["dog"][1], "lucy")
 
-    def test_simple_object(self):
+    def test_simple_object_1(self):
+        qs = "&id=foo&dog.name=lucy"
+        parser = QueryStringParser(qs)
+
+        self.assertEqual(parser.result["id"], "foo")
+        self.assertEqual(parser.result["dog"]["name"], "lucy")
+
+    def test_simple_object_2(self):
         qs = "&id=foo&dog.name=lucy&dog.color=brown"
         parser = QueryStringParser(qs)
 
@@ -106,7 +113,6 @@ class QueryStringSuite(unittest.TestCase):
         self.assertEqual(parser.result["dog"][0][0][1], "radar")
         self.assertEqual(parser.result["dog"][0][0][2], "tucker")
 
-
     def test_multidimensional_array_with_object(self):
         qs = "&id=foo&dog[0][0].name=lucy&dog[0][1].name=radar&bar=baz"
         parser = QueryStringParser(qs)
@@ -130,7 +136,13 @@ class QueryStringSuite(unittest.TestCase):
         self.assertEqual(parser.result["dog"][1]["name"], "radar")
 
     def test_mixed1(self):
-        qs = "&id=foo&dog[2]=dexter&dog[1]=tucker&dog[0]=lucy&cat=ollie&pets[1].name=pogo&pets[1].type=catz&pets[0].name=kiki&pets[0].type=cat&fish.name=robofish&fish.type=fishz&person.name[0]=adam&person.name[1]=adamz&plants.name[0][1]=flower&plants.name[0][0]=tree&plants.name[1][0]=willow&plants.name[1][1]=fern"
+        qs = "&id=foo&dog[2]=dexter&dog[1]=tucker&dog[0]=lucy&cat=ollie\
+&pets[1].name=pogo&pets[1].type=catz&pets[0].name=kiki\
+&pets[0].type=cat&fish.name=robofish&fish.type=fishz\
+&person.name[0]=adam&person.name[1]=adamz\
+&plants.name[0][1]=flower&plants.name[0][0]=tree\
+&plants.name[1][0]=willow&plants.name[1][1]=fern\
+&end[0][0][0]=lucy&end[0][0][1]=radar&end[0][0][2]=tucker"
         parser = QueryStringParser(qs)
 
         self.assertEqual(parser.result["id"], "foo")
@@ -156,6 +168,9 @@ class QueryStringSuite(unittest.TestCase):
         self.assertEqual(parser.result["plants"]["name"][0][1], "flower")
         self.assertEqual(parser.result["plants"]["name"][1][0], "willow")
         self.assertEqual(parser.result["plants"]["name"][1][1], "fern")
+        self.assertEqual(parser.result["end"][0][0][0], "lucy")
+        self.assertEqual(parser.result["end"][0][0][1], "radar")
+        self.assertEqual(parser.result["end"][0][0][2], "tucker")
 
 def suite():
     suite = unittest.TestSuite()

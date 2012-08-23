@@ -173,10 +173,10 @@ class QueryStringSuite(unittest.TestCase):
         self.assertEqual(parser.result["end"][0][0][1], "radar")
         self.assertEqual(parser.result["end"][0][0][2], "tucker")
 
-# def suite():
-#     suite = unittest.TestSuite()
-#     suite.addTest(unittest.makeSuite(QueryStringSuite))
-#     return suite
+def suite():
+    suite = unittest.TestSuite()
+    suite.addTest(unittest.makeSuite(QueryStringSuite))
+    return suite
 
-# if __name__ == "__main__":
-#     unittest.TextTestRunner(verbosity=2).run(suite())
+if __name__ == "__main__":
+    unittest.TextTestRunner().run(suite())

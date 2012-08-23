@@ -1,5 +1,7 @@
 # Fancy Query String or application/x-www-form-urlencoded parsing
 
+[![Build Status](https://secure.travis-ci.org/aventurella/pyquerystring.png?branch=master)](http://travis-ci.org/aventurella/pyquerystring)
+
 ## The Problem
 
 Python's default:

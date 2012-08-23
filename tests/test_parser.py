@@ -14,8 +14,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Path hack.
+
+import sys, os
+sys.path.insert(0, os.path.abspath('..'))
+
 import unittest
-import context
 from pyquerystring import QueryStringParser
 
 

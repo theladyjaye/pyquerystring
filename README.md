@@ -38,13 +38,13 @@ Not exactly what was described by the query string.  But that's ok, if you need 
 Lets try some code:
 
 ```python
-	from querystring import QueryStringParser
+	from querystring import parse
 
 	def __main__():
 		qs = "&id=foo&dog[0].name=lucy&dog[1].name=radar"
-		parser = QueryStringParser(qs)
-		print(parser.result["dog"][0]["name"]) #lucy
-		print(parser.result["dog"][1]["name"]) #radar
+		result = parse(qs)
+		print(result["dog"][0]["name"]) #lucy
+		print(result["dog"][1]["name"]) #radar
 
 	if __name__ == "__main__":
 		main()

@@ -1,23 +1,6 @@
-# Fancy query string parsing & application/x-www-form-urlencoded parsing
-#
-# Copyright 2011 Adam Venturella
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#    http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
-try:
-    from urlparse import parse_qsl
-except ImportError:
-    from urllib.parse import parse_qsl
+# -*- coding: utf-8 -*-
+from .compat import parse_qsl
+from .compat import is_py3
 
 
 class QueryStringToken(object):
@@ -29,15 +12,24 @@ class QueryStringToken(object):
 
 class QueryStringParser(object):
 
-    def __init__(self, qs):
+    def __init__(self, data):
         self.result = {}
-        pairs = parse_qsl(qs)
 
-        # we don't know how a user might pass in array indexs
-        # so sort the keys first to ensure it's in a proper order
-        sorted_pairs = sorted(pairs, key=lambda pair: pair[0])
+        if isinstance(data, str):
+            sorted_pairs = self._sorted_from_string(data)
+        else:
+            sorted_pairs = self._sorted_from_dict(data)
 
         [self.process(x) for x in sorted_pairs]
+
+    def _sorted_from_string(self, data):
+        return sorted(parse_qsl(data), key=lambda p: p[0])
+
+    def _sorted_from_dict(self, data):
+        if is_py3:
+            return sorted(data.items(), key=lambda p: p[0])
+        else:
+            return sorted(data.iteritems(), key=lambda p: p[0])
 
     def process(self, pair):
         key = pair[0]

@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 from setuptools import setup
 
+if sys.argv[-1] == 'publish':
+    os.system('python setup.py sdist upload')
+    sys.exit()
+
 with open('README.md') as f:
     readme = f.read()
 
@@ -15,7 +19,7 @@ requires = []
 
 setup(
     name='pyquerystring',
-    version='0.1',
+    version='0.2.0',
     description='Fancy query string parsing & application/x-www-form-urlencoded parsing',
     long_description=readme,
     author='Adam Venturella',

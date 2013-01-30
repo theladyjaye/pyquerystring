@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import sys
+import os
 from setuptools import setup
 
 if sys.argv[-1] == 'publish':
@@ -20,7 +21,7 @@ requires = []
 
 setup(
     name='pyquerystring',
-    version='0.2.0',
+    version='0.2.2',
     description='Fancy query string parsing & application/x-www-form-urlencoded parsing',
     long_description=readme,
     author='Adam Venturella',

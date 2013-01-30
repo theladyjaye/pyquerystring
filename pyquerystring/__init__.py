@@ -15,9 +15,10 @@
 # limitations under the License.
 
 __title__ = 'pyquerystring'
-__version__ = '0.2.2'
+__version__ = '0.3.0'
 __author__ = 'Adam Venturella'
 __license__ = 'Apache 2'
 __copyright__ = 'Copyright 2013 Adam Venturella'
 
+from .querystring import parse
 from .querystring import QueryStringParser

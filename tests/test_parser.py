@@ -187,6 +187,36 @@ class QueryStringSuite(unittest.TestCase):
         self.assertEqual(result["end"][0][0][2], "tucker")
 
 
+    def test_list_gap(self):
+        qs = "&id=foo&dog[2]=dexter&cat=ollie"
+        result = parse(qs)
+        self.assertEqual(result["id"], "foo")
+        self.assertEqual(len(result["dog"]), 3)
+        self.assertEqual(result["dog"][0], None)
+        self.assertEqual(result["dog"][1], None)
+        self.assertEqual(result["dog"][2], "dexter")
+        self.assertEqual(result["cat"], "ollie")
+
+
+    def test_lotsa_items(self):
+        qs = (
+            "&id=foo&dog[2]=dexter&dog[1]=tucker&dog[0]=lucy&dog[3]=lucy"
+            "&dog[4]=lucy&dog[5]=lucy&dog[6]=lucy&dog[7]=lucy&dog[8]=lucy"
+            "&dog[9]=lucy&dog[10]=fido&dog[11]=lucyagain"
+        )
+        result = parse(qs)
+
+        self.assertEqual(result["id"], "foo")
+        self.assertEqual(len(result["dog"]), 12)
+        self.assertEqual(result["dog"][0], "lucy")
+        self.assertEqual(result["dog"][1], "tucker")
+        self.assertEqual(result["dog"][2], "dexter")
+        self.assertEqual(result["dog"][3], "lucy")
+        self.assertEqual(result["dog"][4], "lucy")
+        self.assertEqual(result["dog"][5], "lucy")
+        self.assertEqual(result["dog"][10], "fido")
+        self.assertEqual(result["dog"][11], "lucyagain")
+
 def suite():
     suite = unittest.TestSuite()
     suite.addTest(unittest.makeSuite(QueryStringSuite))

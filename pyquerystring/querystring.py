@@ -15,6 +15,14 @@ class QueryStringToken(object):
     KEY = "KEY"
 
 
+class DefaultList(list):
+    def __setitem__(self, index, value):
+        size = len(self)
+        if index >= size:
+            self.extend(None for _ in range(size, index + 1))
+        list.__setitem__(self, index, value)
+
+
 class QueryStringParser(object):
 
     def __init__(self, data):
@@ -24,7 +32,6 @@ class QueryStringParser(object):
             sorted_pairs = self._sorted_from_string(data)
         else:
             sorted_pairs = self._sorted_from_obj(data)
-
         [self.process(x) for x in sorted_pairs]
 
     def _sorted_from_string(self, data):
@@ -55,7 +62,7 @@ class QueryStringParser(object):
         key = pair[0]
         value = pair[1]
 
-        #faster than invoking a regex
+        # faster than invoking a regex
         try:
             key.index("[")
             self.parse(key, value)
@@ -78,10 +85,9 @@ class QueryStringParser(object):
 
         for token in tokens:
             token_type, key = token
-
             if token_type == QueryStringToken.ARRAY:
                 if key not in ref:
-                    ref[key] = []
+                    ref[key] = DefaultList()
                 ref = ref[key]
 
             elif token_type == QueryStringToken.OBJECT:
@@ -91,6 +97,8 @@ class QueryStringParser(object):
 
             elif token_type == QueryStringToken.KEY:
                 try:
+                    if ref[key] is None:
+                        raise KeyError
                     ref = ref[key]
                     next(tokens)
                 # TypeError is for pet[]=lucy&pet[]=ollie
@@ -101,14 +109,11 @@ class QueryStringParser(object):
                     # there is not a next token
                     # set the value
                     try:
-
                         next_token = next(tokens)
-
                         if next_token[0] == QueryStringToken.ARRAY:
-                            ref.append([])
+                            ref[key] = DefaultList()
                             ref = ref[key]
                         elif next_token[0] == QueryStringToken.OBJECT:
-
                             try:
                                 ref[key] = {}
                             except IndexError:
@@ -116,9 +121,9 @@ class QueryStringParser(object):
 
                             ref = ref[key]
                     except StopIteration:
-                        try:
+                        if key is None:
                             ref.append(value)
-                        except AttributeError:
+                        else:
                             ref[key] = value
                         return
 

@@ -21,7 +21,7 @@ requires = []
 
 setup(
     name='pyquerystring',
-    version='0.3.0',
+    version='0.4.0',
     description='Fancy query string parsing & application/x-www-form-urlencoded parsing',
     long_description=readme,
     author='Adam Venturella',

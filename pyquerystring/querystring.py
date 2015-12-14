@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
-from itertools import izip_longest
-
 from .compat import parse_qsl
 from .compat import is_py3
+from .compat import zip_longest
 
 
 def parse(data):
@@ -139,7 +138,7 @@ class QueryStringParser(object):
         key = key.replace(" ", "")
 
         # Creates iterator of next chars
-        char_groups = izip_longest(key, key[1:], fillvalue=" ")
+        char_groups = zip_longest(key, key[1:], fillvalue=" ")
         prev_char = " "
         for char, next_char in char_groups:
             if char == "[" and not next_char.isalpha():

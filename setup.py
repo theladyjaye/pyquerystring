@@ -7,8 +7,18 @@ if sys.argv[-1] == 'publish':
     os.system('python setup.py sdist upload')
     sys.exit()
 
-with open('README.md') as f:
-    readme = f.read()
+readme = """Query String Parsing The Way It Should Be
+
+Python's default urlparse.parse_qs() does not understand the concept of data structures. While this works for simple querystrings, anything more complex returns a less than desirable result.
+
+This library is intended to inteligentally parse complex querystrings that python's library is unable to handle such as the following:
+
+mylist[]=item0&mylist[]=item1
+mylist[0]=item0&mylist[1]=item1
+mylist[0][0]=subitem0&mylist[0][1]=subitem1
+mylist.element=item0
+mylist.element[0]=item0&mylist.element[1]=item0
+"""
 
 with open('LICENSE') as f:
     license = f.read()
@@ -21,8 +31,8 @@ requires = []
 
 setup(
     name='pyquerystring',
-    version='0.4.0',
-    description='Fancy query string parsing & application/x-www-form-urlencoded parsing',
+    version='1.0',
+    description='Query String Parsing The Way It Should Be',
     long_description=readme,
     author='Adam Venturella',
     author_email='aventurella@gmail.com',
@@ -43,9 +53,9 @@ setup(
         'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.0',
-        'Programming Language :: Python :: 3.1',
-        'Programming Language :: Python :: 3.2',
+        'Programming Language :: Python :: 3.3',
+        'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5',
     ),
 
 )

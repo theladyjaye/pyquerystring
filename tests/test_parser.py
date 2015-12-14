@@ -66,6 +66,21 @@ class QueryStringSuite(unittest.TestCase):
         self.assertEqual(result["dog"]["name"], "lucy")
         self.assertEqual(result["dog"]["color"], "brown")
 
+    def test_simple_object_3(self):
+        qs = "&id=foo&dog.name=lucy&dog[color]=brown"
+        result = parse(qs)
+
+        self.assertEqual(result["id"], "foo")
+        self.assertEqual(result["dog"]["name"], "lucy")
+        self.assertEqual(result["dog"]["color"], "brown")
+
+    def test_simple_object_4(self):
+        qs = "&id=foo&dog[name]=lucy&dog[ color ]=brown"
+        result = parse(qs)
+        self.assertEqual(result["id"], "foo")
+        self.assertEqual(result["dog"]["name"], "lucy")
+        self.assertEqual(result["dog"]["color"], "brown")
+
     def test_object_with_array(self):
         qs = "&id=foo&dog[0].name=lucy&dog[1].name=radar"
         result = parse(qs)
@@ -78,7 +93,6 @@ class QueryStringSuite(unittest.TestCase):
     def test_push_array(self):
         qs = "&id=foo&dog[]=z-lucy&dog[]=radar"
         result = parse(qs)
-
         self.assertEqual(result["id"], "foo")
         self.assertEqual(len(result["dog"]), 2)
         self.assertEqual(result["dog"][0], "z-lucy")

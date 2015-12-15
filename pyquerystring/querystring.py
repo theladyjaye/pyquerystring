@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from .compat import parse_qsl
 from .compat import is_py3
+from .compat import zip_longest
 
 
 def parse(data):
@@ -128,25 +129,39 @@ class QueryStringParser(object):
                         return
 
     def tokens(self, key):
+        """
+        Returns an iterator of the array elements (tokens) of a given key
+        """
         buf = ""
-        for char in key:
-            if char == "[":
+
+        # remove white space from any keys
+        key = key.replace(" ", "")
+
+        # Creates iterator of next chars
+        char_groups = zip_longest(key, key[1:], fillvalue=" ")
+        prev_char = " "
+        for char, next_char in char_groups:
+            if char == "[" and not next_char.isalpha():
                 yield QueryStringToken.ARRAY, buf
                 buf = ""
 
-            elif char == ".":
+            elif char == "[" or char == ".":
                 yield QueryStringToken.OBJECT, buf
                 buf = ""
 
             elif char == "]":
-                try:
-                    yield QueryStringToken.KEY, int(buf)
-                    buf = ""
-                except ValueError:
-                    yield QueryStringToken.KEY, None
+                if not prev_char.isalpha():
+                    try:
+                        yield QueryStringToken.KEY, int(buf)
+                        buf = ""
+                    except ValueError:
+                        yield QueryStringToken.KEY, None
+                else:
+                    # Actually an object, consume the close bracket
+                    pass
             else:
                 buf = buf + char
-
+            prev_char = char
         if len(buf) > 0:
             yield QueryStringToken.KEY, buf
         else:

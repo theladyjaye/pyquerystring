@@ -12,9 +12,13 @@ readme = """Python's default urlparse.parse_qs() does not understand the concept
 This library is intended to inteligentally parse complex querystrings that python's library is unable to handle such as the following:
 
 mylist[]=item0&mylist[]=item1
+
 mylist[0]=item0&mylist[1]=item1
+
 mylist[0][0]=subitem0&mylist[0][1]=subitem1
+
 mylist.element=item0
+
 mylist.element[0]=item0&mylist.element[1]=item0
 """
 

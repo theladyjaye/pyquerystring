@@ -7,9 +7,7 @@ if sys.argv[-1] == 'publish':
     os.system('python setup.py sdist upload')
     sys.exit()
 
-readme = """Query String Parsing The Way It Should Be
-
-Python's default urlparse.parse_qs() does not understand the concept of data structures. While this works for simple querystrings, anything more complex returns a less than desirable result.
+readme = """Python's default urlparse.parse_qs() does not understand the concept of data structures. While this works for simple querystrings, anything more complex returns a less than desirable result.
 
 This library is intended to inteligentally parse complex querystrings that python's library is unable to handle such as the following:
 
@@ -31,7 +29,7 @@ requires = []
 
 setup(
     name='pyquerystring',
-    version='1.0',
+    version='1.0.1',
     description='Query String Parsing The Way It Should Be',
     long_description=readme,
     author='Adam Venturella',

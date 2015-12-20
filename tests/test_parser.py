@@ -42,6 +42,11 @@ class QueryStringSuite(unittest.TestCase):
         self.assertEqual(result["dog"][0], "tucker")
         self.assertEqual(result["dog"][1], "lucy")
 
+    def test_bad_format(self):
+        qs = "&id=foo&dog[1]]=lucy"
+        with self.assertRaises(IOError):
+            parse(qs)
+
     def test_simple_array(self):
         qs = "&id=foo&dog[1]=lucy&dog[0]=tucker"
         result = parse(qs)
@@ -75,11 +80,20 @@ class QueryStringSuite(unittest.TestCase):
         self.assertEqual(result["dog"]["color"], "brown")
 
     def test_simple_object_4(self):
-        qs = "&id=foo&dog[name]=lucy&dog[ color ]=brown"
+        qs = "&id=foo&dog2[name]=lucy&dog2[name2]=lucy&dog[ color ]=brown"
         result = parse(qs)
+
         self.assertEqual(result["id"], "foo")
-        self.assertEqual(result["dog"]["name"], "lucy")
+        self.assertEqual(result["dog2"]["name2"], "lucy")
         self.assertEqual(result["dog"]["color"], "brown")
+
+    def test_odd_names(self):
+        qs = "&id=foo&dog[name.1]=lucy&dog[name[2]]=radar"
+        result = parse(qs)
+
+        self.assertEqual(result["id"], "foo")
+        self.assertEqual(result["dog"]["name.1"], "lucy")
+        self.assertEqual(result["dog"]["name[2]"], "radar")
 
     def test_object_with_array(self):
         qs = "&id=foo&dog[0].name=lucy&dog[1].name=radar"

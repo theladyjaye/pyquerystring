@@ -2,6 +2,14 @@ Changelog
 =========
 
 
+1.0.1
+-----
+
+Changes:
+ - Enhanced parsing of associative array objects.
+ - Fixes bug where array objects could not end in a digit
+
+
 1.0
 -----
 

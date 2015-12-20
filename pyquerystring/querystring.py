@@ -139,29 +139,41 @@ class QueryStringParser(object):
 
         # Creates iterator of next chars
         char_groups = zip_longest(key, key[1:], fillvalue=" ")
-        prev_char = " "
+        in_array_bracket = 0
+        pre_array_buffer = ''
         for char, next_char in char_groups:
-            if char == "[" and not next_char.isalpha():
-                yield QueryStringToken.ARRAY, buf
-                buf = ""
+            if char == "[":
+                in_array_bracket += 1
+                if in_array_bracket == 1:
+                    pre_array_buffer = buf
+                    buf = ""
+                else:
+                    buf = buf + char
 
-            elif char == "[" or char == ".":
+            elif char == "." and in_array_bracket == 0:
                 yield QueryStringToken.OBJECT, buf
                 buf = ""
 
             elif char == "]":
-                if not prev_char.isalpha():
-                    try:
+                in_array_bracket -= 1
+                if in_array_bracket < 0:
+                    raise IOError('Non-matching close bracket in querytstring')
+                if in_array_bracket == 0:
+                    if buf.isdigit():
+                        yield QueryStringToken.ARRAY, pre_array_buffer
                         yield QueryStringToken.KEY, int(buf)
-                        buf = ""
-                    except ValueError:
+                    elif buf == '':
+                        yield QueryStringToken.ARRAY, pre_array_buffer
                         yield QueryStringToken.KEY, None
+                    else:
+                        yield QueryStringToken.OBJECT, pre_array_buffer
+                        yield QueryStringToken.KEY, buf
+                    buf = ""
                 else:
-                    # Actually an object, consume the close bracket
-                    pass
+                    buf = buf + char
             else:
                 buf = buf + char
-            prev_char = char
+
         if len(buf) > 0:
             yield QueryStringToken.KEY, buf
         else:

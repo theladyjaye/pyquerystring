@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from .compat import parse_qsl
 from .compat import is_py3
-from .compat import zip_longest
 
 
 def parse(data):
@@ -33,7 +32,7 @@ class QueryStringParser(object):
             sorted_pairs = self._sorted_from_string(data)
         else:
             sorted_pairs = self._sorted_from_obj(data)
-        [self.process(x) for x in sorted_pairs]
+        [self.process(k, v) for k, v in sorted_pairs]
 
     def _sorted_from_string(self, data):
         stage1 = parse_qsl(data)
@@ -59,28 +58,28 @@ class QueryStringParser(object):
 
         return sorted(items, key=lambda p: p[0])
 
-    def process(self, pair):
-        key = pair[0]
-        value = pair[1]
+    def process(self, key, value):
+        """
 
-        # faster than invoking a regex
+        Given a key-value pair, assign the value to the location specified by
+        the key in the result attribute.
+
+        >>> self.process('id[0]', 'foo')
+        self.result['id'][0] = 'foo'
+
+        """
+
         try:
-            key.index("[")
             self.parse(key, value)
-            return
         except ValueError:
-            pass
-
-        try:
-            key.index(".")
-            self.parse(key, value)
-            return
-        except ValueError:
-            pass
-
-        self.result[key] = value
+            self.result[key] = value
 
     def parse(self, key, value):
+
+        """
+        Break the key into tokens to determine where to assign the value
+        """
+
         ref = self.result
         tokens = self.tokens(key)
 
@@ -98,8 +97,9 @@ class QueryStringParser(object):
 
             elif token_type == QueryStringToken.KEY:
                 try:
-                    if ref[key] is None:
+                    if ref[key] is None or type(ref[key]) not in (DefaultList, dict):
                         raise KeyError
+                    # This key exists as list or dict. Traverse down the tree.
                     ref = ref[key]
                     next(tokens)
                 # TypeError is for pet[]=lucy&pet[]=ollie
@@ -138,10 +138,9 @@ class QueryStringParser(object):
         key = key.replace(" ", "")
 
         # Creates iterator of next chars
-        char_groups = zip_longest(key, key[1:], fillvalue=" ")
         in_array_bracket = 0
         pre_array_buffer = ''
-        for char, next_char in char_groups:
+        for char in key:
             if char == "[":
                 in_array_bracket += 1
                 if in_array_bracket == 1:
@@ -157,7 +156,7 @@ class QueryStringParser(object):
             elif char == "]":
                 in_array_bracket -= 1
                 if in_array_bracket < 0:
-                    raise IOError('Non-matching close bracket in querytstring')
+                    raise IOError('Non-matching close bracket in querystring')
                 if in_array_bracket == 0:
                     if buf.isdigit():
                         yield QueryStringToken.ARRAY, pre_array_buffer

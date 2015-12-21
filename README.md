@@ -18,7 +18,7 @@ While this works for simple querystrings, anything more complex returns a less t
 	{"dog[0]":["lucy"], "dog[1]":["tucker"], "dog[2]":["radar"], "id":[11]}
 ```
 
-This library is intended to inteligentally parse complex querystrings that python's library is unable to handle such as the following:
+This library is intended to intelligently parse complex querystrings that python's library is unable to handle such as the following:
 
 ```
 mylist[]=item0&mylist[]=item1
@@ -39,16 +39,16 @@ Lets try some code:
 	>>> print(result["dog"][0]["name"])
 	lucy
 	>>> print(result)
-	{'dog': [{'name': 'lucy'}, {'name': 'radar'}], 'id': 'foo'}
+	{'id': 'foo', 'dog': [{'name': 'lucy'}, {'name': 'radar'}]}
 ```
 
 You can also do some primitive array pushing:
 
 ```python
-	>>> parse("id=foo&dog[]=radar&dog[]=lucy&dog[]=tucker")
-	{'dog': ['radar', 'lucy', 'tucker'], 'id': 'foo'}
-	>>> parse("id=foo&dog.name[]=radar&dog.name[]=tucker&dog.name[]=lucy")
-	{'dog': {'name': ['radar', 'tucker', 'lucy']}, 'id': 'foo'}
+	>>> parse("dog[]=radar&dog[]=lucy&dog[]=tucker")
+	{'dog': ['radar', 'lucy', 'tucker']}
+	>>> parse("dog.name[]=radar&dog.name[]=tucker&dog.name[]=lucy")
+	{'dog': {'name': ['radar', 'tucker', 'lucy']}}
 ```
 
 You can pass objects by associative array or dot notation:
@@ -63,15 +63,15 @@ You can pass objects by associative array or dot notation:
 You can get pretty crazy with it as well.  It will handle multidimensional arrays:
 
 ```python
-	>>> parse("id=foo&dog[0][0]=lucy&dog[0][1]=radar&dog[1][0]=tucker&dog[1][1]=dexter")
-	{'dog': [['lucy', 'radar'], ['tucker', 'dexter']], 'id': 'foo'}
+	>>> parse("dog[0][0]=lucy&dog[0][1]=radar&dog[1][0]=tucker&dog[1][1]=dexter")
+	{'dog': [['lucy', 'radar'], ['tucker', 'dexter']]}
 ```
 
 Or you can go totally nuts and just throw some mixed madness at it:
 
 ```python
-	>>> parse("id=foo&dog[1]=tucker&dog[0]=lucy&pets[1].name=pogo&pets[1].type=catz&pets[0].name=kiki&pets[0].type=cat&fish.name=robofish&fish.type=fishz&person.name[0]=adam&person.name[1]=adamz&plants.name[0][1]=flower&plants.name[0][0]=tree&plants.name[1][0]=willow&plants.name[1][1]=fern")
-	{'plants': {'name': [['tree', 'flower'], ['willow', 'fern']]}, 'fish': {'type': 'fishz', 'name': 'robofish'}, 'dog': ['lucy', 'tucker'], 'person': {'name': ['adam', 'adamz']}, 'pets': [{'type': 'cat', 'name': 'kiki'}, {'type': 'catz', 'name': 'pogo'}], 'id': 'foo'}
+	>>> parse("dog[1]=tucker&dog[0]=lucy&pets[1].name=pogo&pets[1].type=catz&pets[0].name=kiki&pets[0].type=cat&fish.name=robofish&fish.type=fishz&person.name[0]=adam&person.name[1]=adamz&plants.name[0][1]=flower&plants.name[0][0]=tree&plants.name[1][0]=willow&plants.name[1][1]=fern")
+	{'plants': {'name': [['tree', 'flower'], ['willow', 'fern']]}, 'fish': {'type': 'fishz', 'name': 'robofish'}, 'dog': ['lucy', 'tucker'], 'person': {'name': ['adam', 'adamz']}, 'pets': [{'type': 'cat', 'name': 'kiki'}, {'type': 'catz', 'name': 'pogo'}]}
 ```
 
 

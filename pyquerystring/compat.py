@@ -13,7 +13,5 @@ is_py3 = (_ver[0] == 3)
 
 if is_py2:
     from urlparse import parse_qsl
-    from itertools import izip_longest as zip_longest
 elif is_py3:
     from urllib.parse import parse_qsl
-    from itertools import zip_longest

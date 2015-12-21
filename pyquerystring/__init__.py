@@ -15,7 +15,7 @@
 # limitations under the License.
 
 __title__ = 'pyquerystring'
-__version__ = '1.0.1'
+__version__ = '1.0.2'
 __author__ = 'Adam Venturella'
 __license__ = 'Apache 2'
 __copyright__ = 'Copyright 2011-2016 Adam Venturella'

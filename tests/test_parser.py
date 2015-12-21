@@ -47,6 +47,21 @@ class QueryStringSuite(unittest.TestCase):
         with self.assertRaises(IOError):
             parse(qs)
 
+    def test_overlaping_keys(self):
+        qs = "&id=foo&id=foo2"
+        result = parse(qs)
+        self.assertEqual(result["id"], "foo2")
+
+    def test_overlaping_array_keys(self):
+        qs = "&id[1]=foo&id[1]=foo2"
+        result = parse(qs)
+        self.assertEqual(result["id"][1], "foo2")
+
+    def test_overlaping_array_objects(self):
+        qs = "&id[1].name=foo&id[1].name=foo2"
+        result = parse(qs)
+        self.assertEqual(result["id"][1]['name'], "foo2")
+
     def test_simple_array(self):
         qs = "&id=foo&dog[1]=lucy&dog[0]=tucker"
         result = parse(qs)

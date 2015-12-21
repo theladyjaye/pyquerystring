@@ -2,6 +2,15 @@ Changelog
 =========
 
 
+1.0.2
+-----
+
+Changes:
+ - Handles overlapping keys
+ - Optimizes code
+ - Adds benchmark.py
+
+
 1.0.1
 -----
 

@@ -15,6 +15,14 @@ class QueryStringToken(object):
     KEY = "KEY"
 
 
+class DefaultList(list):
+    def __setitem__(self, index, value):
+        size = len(self)
+        if index >= size:
+            self.extend(None for _ in range(size, index + 1))
+        list.__setitem__(self, index, value)
+
+
 class QueryStringParser(object):
 
     def __init__(self, data):
@@ -24,8 +32,7 @@ class QueryStringParser(object):
             sorted_pairs = self._sorted_from_string(data)
         else:
             sorted_pairs = self._sorted_from_obj(data)
-
-        [self.process(x) for x in sorted_pairs]
+        [self.process(k, v) for k, v in sorted_pairs]
 
     def _sorted_from_string(self, data):
         stage1 = parse_qsl(data)
@@ -51,37 +58,36 @@ class QueryStringParser(object):
 
         return sorted(items, key=lambda p: p[0])
 
-    def process(self, pair):
-        key = pair[0]
-        value = pair[1]
+    def process(self, key, value):
+        """
 
-        #faster than invoking a regex
+        Given a key-value pair, assign the value to the location specified by
+        the key in the result attribute.
+
+        >>> self.process('id[0]', 'foo')
+        self.result['id'][0] = 'foo'
+
+        """
+
         try:
-            key.index("[")
             self.parse(key, value)
-            return
         except ValueError:
-            pass
-
-        try:
-            key.index(".")
-            self.parse(key, value)
-            return
-        except ValueError:
-            pass
-
-        self.result[key] = value
+            self.result[key] = value
 
     def parse(self, key, value):
+
+        """
+        Break the key into tokens to determine where to assign the value
+        """
+
         ref = self.result
         tokens = self.tokens(key)
 
         for token in tokens:
             token_type, key = token
-
             if token_type == QueryStringToken.ARRAY:
                 if key not in ref:
-                    ref[key] = []
+                    ref[key] = DefaultList()
                 ref = ref[key]
 
             elif token_type == QueryStringToken.OBJECT:
@@ -91,6 +97,9 @@ class QueryStringParser(object):
 
             elif token_type == QueryStringToken.KEY:
                 try:
+                    if ref[key] is None or type(ref[key]) not in (DefaultList, dict):
+                        raise KeyError
+                    # This key exists as list or dict. Traverse down the tree.
                     ref = ref[key]
                     next(tokens)
                 # TypeError is for pet[]=lucy&pet[]=ollie
@@ -101,14 +110,11 @@ class QueryStringParser(object):
                     # there is not a next token
                     # set the value
                     try:
-
                         next_token = next(tokens)
-
                         if next_token[0] == QueryStringToken.ARRAY:
-                            ref.append([])
+                            ref[key] = DefaultList()
                             ref = ref[key]
                         elif next_token[0] == QueryStringToken.OBJECT:
-
                             try:
                                 ref[key] = {}
                             except IndexError:
@@ -116,29 +122,54 @@ class QueryStringParser(object):
 
                             ref = ref[key]
                     except StopIteration:
-                        try:
+                        if key is None:
                             ref.append(value)
-                        except AttributeError:
+                        else:
                             ref[key] = value
                         return
 
     def tokens(self, key):
+        """
+        Returns an iterator of the array elements (tokens) of a given key
+        """
         buf = ""
+
+        # remove white space from any keys
+        key = key.replace(" ", "")
+
+        # Creates iterator of next chars
+        in_array_bracket = 0
+        pre_array_buffer = ''
         for char in key:
             if char == "[":
-                yield QueryStringToken.ARRAY, buf
-                buf = ""
+                in_array_bracket += 1
+                if in_array_bracket == 1:
+                    pre_array_buffer = buf
+                    buf = ""
+                else:
+                    buf = buf + char
 
-            elif char == ".":
+            elif char == "." and in_array_bracket == 0:
                 yield QueryStringToken.OBJECT, buf
                 buf = ""
 
             elif char == "]":
-                try:
-                    yield QueryStringToken.KEY, int(buf)
+                in_array_bracket -= 1
+                if in_array_bracket < 0:
+                    raise IOError('Non-matching close bracket in querystring')
+                if in_array_bracket == 0:
+                    if buf.isdigit():
+                        yield QueryStringToken.ARRAY, pre_array_buffer
+                        yield QueryStringToken.KEY, int(buf)
+                    elif buf == '':
+                        yield QueryStringToken.ARRAY, pre_array_buffer
+                        yield QueryStringToken.KEY, None
+                    else:
+                        yield QueryStringToken.OBJECT, pre_array_buffer
+                        yield QueryStringToken.KEY, buf
                     buf = ""
-                except ValueError:
-                    yield QueryStringToken.KEY, None
+                else:
+                    buf = buf + char
             else:
                 buf = buf + char
 

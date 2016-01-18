@@ -42,6 +42,26 @@ class QueryStringSuite(unittest.TestCase):
         self.assertEqual(result["dog"][0], "tucker")
         self.assertEqual(result["dog"][1], "lucy")
 
+    def test_bad_format(self):
+        qs = "&id=foo&dog[1]]=lucy"
+        with self.assertRaises(IOError):
+            parse(qs)
+
+    def test_overlaping_keys(self):
+        qs = "&id=foo&id=foo2"
+        result = parse(qs)
+        self.assertEqual(result["id"], "foo2")
+
+    def test_overlaping_array_keys(self):
+        qs = "&id[1]=foo&id[1]=foo2"
+        result = parse(qs)
+        self.assertEqual(result["id"][1], "foo2")
+
+    def test_overlaping_array_objects(self):
+        qs = "&id[1].name=foo&id[1].name=foo2"
+        result = parse(qs)
+        self.assertEqual(result["id"][1]['name'], "foo2")
+
     def test_simple_array(self):
         qs = "&id=foo&dog[1]=lucy&dog[0]=tucker"
         result = parse(qs)
@@ -66,6 +86,30 @@ class QueryStringSuite(unittest.TestCase):
         self.assertEqual(result["dog"]["name"], "lucy")
         self.assertEqual(result["dog"]["color"], "brown")
 
+    def test_simple_object_3(self):
+        qs = "&id=foo&dog.name=lucy&dog[color]=brown"
+        result = parse(qs)
+
+        self.assertEqual(result["id"], "foo")
+        self.assertEqual(result["dog"]["name"], "lucy")
+        self.assertEqual(result["dog"]["color"], "brown")
+
+    def test_simple_object_4(self):
+        qs = "&id=foo&dog2[name]=lucy&dog2[name2]=lucy&dog[ color ]=brown"
+        result = parse(qs)
+
+        self.assertEqual(result["id"], "foo")
+        self.assertEqual(result["dog2"]["name2"], "lucy")
+        self.assertEqual(result["dog"]["color"], "brown")
+
+    def test_odd_names(self):
+        qs = "&id=foo&dog[name.1]=lucy&dog[name[2]]=radar"
+        result = parse(qs)
+
+        self.assertEqual(result["id"], "foo")
+        self.assertEqual(result["dog"]["name.1"], "lucy")
+        self.assertEqual(result["dog"]["name[2]"], "radar")
+
     def test_object_with_array(self):
         qs = "&id=foo&dog[0].name=lucy&dog[1].name=radar"
         result = parse(qs)
@@ -78,7 +122,6 @@ class QueryStringSuite(unittest.TestCase):
     def test_push_array(self):
         qs = "&id=foo&dog[]=z-lucy&dog[]=radar"
         result = parse(qs)
-
         self.assertEqual(result["id"], "foo")
         self.assertEqual(len(result["dog"]), 2)
         self.assertEqual(result["dog"][0], "z-lucy")
@@ -186,6 +229,36 @@ class QueryStringSuite(unittest.TestCase):
         self.assertEqual(result["end"][0][0][1], "radar")
         self.assertEqual(result["end"][0][0][2], "tucker")
 
+
+    def test_list_gap(self):
+        qs = "&id=foo&dog[2]=dexter&cat=ollie"
+        result = parse(qs)
+        self.assertEqual(result["id"], "foo")
+        self.assertEqual(len(result["dog"]), 3)
+        self.assertEqual(result["dog"][0], None)
+        self.assertEqual(result["dog"][1], None)
+        self.assertEqual(result["dog"][2], "dexter")
+        self.assertEqual(result["cat"], "ollie")
+
+
+    def test_lotsa_items(self):
+        qs = (
+            "&id=foo&dog[2]=dexter&dog[1]=tucker&dog[0]=lucy&dog[3]=lucy"
+            "&dog[4]=lucy&dog[5]=lucy&dog[6]=lucy&dog[7]=lucy&dog[8]=lucy"
+            "&dog[9]=lucy&dog[10]=fido&dog[11]=lucyagain"
+        )
+        result = parse(qs)
+
+        self.assertEqual(result["id"], "foo")
+        self.assertEqual(len(result["dog"]), 12)
+        self.assertEqual(result["dog"][0], "lucy")
+        self.assertEqual(result["dog"][1], "tucker")
+        self.assertEqual(result["dog"][2], "dexter")
+        self.assertEqual(result["dog"][3], "lucy")
+        self.assertEqual(result["dog"][4], "lucy")
+        self.assertEqual(result["dog"][5], "lucy")
+        self.assertEqual(result["dog"][10], "fido")
+        self.assertEqual(result["dog"][11], "lucyagain")
 
 def suite():
     suite = unittest.TestSuite()

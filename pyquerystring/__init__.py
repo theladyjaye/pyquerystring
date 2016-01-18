@@ -1,6 +1,6 @@
 # Fancy query string parsing & application/x-www-form-urlencoded parsing
 #
-# Copyright 2013 Adam Venturella
+# Copyright 2011-2016 Adam Venturella
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,10 +15,10 @@
 # limitations under the License.
 
 __title__ = 'pyquerystring'
-__version__ = '0.3.0'
+__version__ = '1.0.2'
 __author__ = 'Adam Venturella'
 __license__ = 'Apache 2'
-__copyright__ = 'Copyright 2013 Adam Venturella'
+__copyright__ = 'Copyright 2011-2016 Adam Venturella'
 
 from .querystring import parse
 from .querystring import QueryStringParser

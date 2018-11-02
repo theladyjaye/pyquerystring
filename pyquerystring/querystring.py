@@ -75,7 +75,6 @@ class QueryStringParser(object):
             self.result[key] = value
 
     def parse(self, key, value):
-
         """
         Break the key into tokens to determine where to assign the value
         """
@@ -176,4 +175,4 @@ class QueryStringParser(object):
         if len(buf) > 0:
             yield QueryStringToken.KEY, buf
         else:
-            raise StopIteration()
+            return
